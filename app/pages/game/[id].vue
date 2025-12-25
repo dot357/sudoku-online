@@ -205,7 +205,7 @@ watch(
 
     <section style="display:flex; gap:24px; margin-top:18px; align-items:flex-start;">
      <ClientOnly>
-      <SudokuGrid
+      <NewSudokuGrid
         :current="game.current"
         :given="game.given"
         :selected-index="selectedIndex"
