@@ -5,6 +5,7 @@ import type { CellValue, GamePublicStateDTO, GameState } from '~~/shared/types/s
 import { calculateDigitCounts } from '~~/server/services/sudoku/digitCounts'
 import { computeElapsedSec } from '~~/server/services/game/time'
 import type { InputJsonValue } from '@prisma/client/runtime/wasm-compiler-edge'
+import { toPublicDTO } from '~~/server/utils/publicDTOs'
 
 type MoveBody = {
   index: number
@@ -146,18 +147,3 @@ export default defineEventHandler(async (event) => {
 
 
 
-function toPublicDTO(id: string, state: GameState): GamePublicStateDTO {
-  return {
-    id,
-    rank: state.rank,
-    status: state.status,
-    score: state.score,
-    hintsUsed: state.hintsUsed,
-    errors: state.errors,
-    startedAt: state.startedAt,
-    elapsedSec: computeElapsedSec(state),
-    current: state.current,
-    given: state.given,
-    digitCounts: calculateDigitCounts(state.current),
-  }
-}
