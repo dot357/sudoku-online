@@ -8,16 +8,39 @@ export interface NewGameRequestDTO {
   rank: Rank
 }
 
+
+export type Grid81<T> = T[] 
+
+export interface GameState {
+  rank: Rank
+  status: GameStatus
+
+  // authoritative truth
+  solution: number[] // 81 ints 1..9 (Server Only)
+  puzzle: CellValue[] // 81 with nulls
+  given: boolean[] // 81
+  current: CellValue[] // 81 (what user filled)
+
+  score: number
+  errors: number
+  hintsUsed: number
+
+  startedAt: string
+  pauseAccumulatedMs: number
+  pausedAt: string | null
+}
+
 export interface GamePublicStateDTO {
   id: string
   rank: Rank
   status: GameStatus
   score: number
   hintsUsed: number
-  startedAt: string // ISO
+  startedAt: string
   elapsedSec: number
-  // grid stuff later:
-  // current: CellValue[]
-  // given: boolean[]
-  // digitCounts: number[]
+
+  current: CellValue[]
+  given: boolean[]
+  digitCounts: number[] // 10 || 9
+  errors: number
 }
