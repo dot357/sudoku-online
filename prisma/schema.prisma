@@ -6,10 +6,12 @@
 
 generator client {
   provider = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
   provider = "sqlite"
+  // url = env("DATABASE_URL")
 }
 
 model Game {
@@ -26,10 +28,9 @@ model Game {
 
 model Record {
   id          String   @id @default(cuid())
+  gameId      String   @unique
   rank        String
   score       Int
   durationSec Int
   createdAt   DateTime @default(now())
-
-  @@index([score])
 }

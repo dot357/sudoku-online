@@ -1,0 +1,139 @@
+{
+  "info": {
+    "name": "Sudoku API ",
+    "_postman_id": "b6c43c30-5fb1-4a09-bbdb-5a1af7e1b2b2",
+    "description": "Postman collection for Sudoku take-home backend. Uses cookie-based sid session; keep a single Postman cookie jar/session to persist sid.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "gameId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Game - Create New Game",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/game/new",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "game", "new"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"rank\": \"beginner\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (json && json.id) {",
+              "    pm.collectionVariables.set('gameId', json.id);",
+              "  }",
+              "} catch (e) {}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Game - Get Game By ID",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/game/{{gameId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "game", "{{gameId}}"]
+        }
+      }
+    },
+    {
+      "name": "Game - List My Games (lightweight)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/games",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "games"]
+        }
+      }
+    },
+    {
+      "name": "Game - Move",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/game/{{gameId}}/move",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "game", "{{gameId}}", "move"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"index\": 6,\n  \"value\": 9\n}"
+        }
+      }
+    },
+    {
+      "name": "Game - Hint",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/api/game/{{gameId}}/hint",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "game", "{{gameId}}", "hint"]
+        }
+      }
+    },
+    {
+      "name": "Game - Pause",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/api/game/{{gameId}}/pause",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "game", "{{gameId}}", "pause"]
+        }
+      }
+    },
+    {
+      "name": "Game - Resume",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/api/game/{{gameId}}/resume",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "game", "{{gameId}}", "resume"]
+        }
+      }
+    },
+    {
+      "name": "Debug (dev-only) - Solve Game Instantly",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/api/game/{{gameId}}/solve",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "game", "{{gameId}}", "solve"]
+        }
+      }
+    },
+    {
+      "name": "Records - Top 3",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/records",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "records"]
+        }
+      }
+    }
+  ]
+}
