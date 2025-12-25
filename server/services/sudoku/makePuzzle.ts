@@ -1,4 +1,5 @@
 import { countVisibleCells } from './validate'
+import { countSolutions } from './countSolutions';
 
 const CELL_COUNT = 81
 
@@ -22,7 +23,7 @@ export function makePuzzle(
   const targetVisible = pickTargetVisibleCells(rank)
   const puzzle = createPuzzleFromSolution(solution)
 
-  removeCellsUntilTarget(puzzle, targetVisible)
+  removeCellsUntilTargetUnique(puzzle, targetVisible)
   enforceTargetExactly(puzzle, targetVisible)
 
   const given = buildGivenMask(puzzle)
@@ -52,13 +53,27 @@ function createPuzzleFromSolution(solution: number[]): CellValue[] {
   return solution.slice() as CellValue[]
 }
 
-function removeCellsUntilTarget(puzzle: CellValue[], targetVisible: number): void {
-  // Remove cells in a random order until we’re at (or below) target.
-  const removalOrder = shuffledIndices(CELL_COUNT)
 
-  for (const index of removalOrder) {
+function removeCellsUntilTargetUnique(
+  puzzle: CellValue[],
+  targetVisible: number,
+) {
+  const indices = shuffledIndices(puzzle.length)
+
+  for (const idx of indices) {
     if (countVisibleCells(puzzle) <= targetVisible) break
-    puzzle[index] = null
+
+    const backup = puzzle[idx]
+    puzzle[idx] = null
+
+    // Check uniqueness
+    const grid = puzzle.map((v) => v ?? 0)
+    const solutions = countSolutions(grid, 2)
+
+    if (solutions !== 1) {
+      // revert removal
+      puzzle[idx] = backup
+    }
   }
 }
 
