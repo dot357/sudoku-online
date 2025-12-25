@@ -1,2 +1,68 @@
 ## Sudoku online
+Sudoku implementation with per-user sessions (HTTP-only cookie), server-side puzzle generation, persistent game state, scoring, hints, pause/resume, and leaderboard records.
 
+### Stack
+- Nuxt 4 + Nitro
+- Prisma
+- Vitest + vitest-playwright
+- Postman
+- Tailwind
+
+
+
+## Why Nuxt (Nitro) for backend
+- **Server-side puzzle generation**: the solution never needs to be exposed to the client.
+- **Per-user session via HTTP-only cookie**: each user (browser) owns their games.
+- **Simple deployment model**: API routes + UI in one codebase (but backend stays clean and testable).
+
+---
+
+## High-level architecture
+
+- **API routes** live under `server/api/**`
+- **Domain services** live under `server/services/**` (pure, testable logic)
+- **Session** is determined by `sid` cookie (HTTP-only)
+- **Database** persists `Game` rows with `stateJson` holding authoritative game state
+- **Records** persist finished game scores + duration
+
+### Request flows
+#### New Game
+```mermaid
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant A as Nitro API
+  participant S as Sudoku Services
+  participant DB as Prisma/SQLite
+
+  C->>A: POST /api/game/new { rank }
+  A->>A: getOrCreateSid() (HTTP-only cookie)
+  A->>S: generateSolution()
+  A->>S: makePuzzle(solution, rank)
+  A->>DB: game.create({ sid, stateJson })
+  DB-->>A: game row
+  A-->>C: GamePublicStateDTO (no solution)
+```
+
+#### Move
+```mermaid
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant A as Nitro API
+  participant DB as Prisma/SQLite
+  participant F as tryFinishGame()
+
+  C->>A: POST /api/game/:id/move { index, value }
+  A->>A: getOrCreateSid()
+  A->>DB: game.findUnique(id)
+  A->>A: ownership check (game.sid === sid)
+  A->>A: reject if paused / finished / given cell
+  A->>A: apply scoring (+5 correct from null, -1 wrong)
+  A->>F: tryFinishGame(state)
+  A->>DB: game.update(stateJson, status)
+  alt finished
+    A->>DB: record.create({ gameId, score, durationSec })
+  end
+  A-->>C: DTO + move result + optional finished bonus
+```

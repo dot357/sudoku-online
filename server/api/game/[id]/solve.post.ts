@@ -1,9 +1,10 @@
 import { defineEventHandler, createError } from 'h3'
 import { prisma } from '~~/server/db/prisma'
 import { getOrCreateSid } from '~~/server/utils/session'
-import type { GameState } from '~~/shared/types/sudoku'
+import type { CellValue, GameState } from '~~/shared/types/sudoku'
 import { toPublicDTO } from '~~/server/utils/publicDTOs'
 import { tryFinishGame } from '~~/server/services/game/tryFinishGame'
+import type { InputJsonValue } from '@prisma/client/runtime/client'
 
 export default defineEventHandler(async (event) => {
   // Wont work in prod gives me easy solution
@@ -22,7 +23,7 @@ export default defineEventHandler(async (event) => {
   if (!game) throw createError({ statusCode: 404, statusMessage: 'Game not found' })
   if (game.sid !== sid) throw createError({ statusCode: 403, statusMessage: 'Not allowed' })
 
-  const state = game.stateJson as GameState
+  const state = game.stateJson as unknown as GameState
 
   if (state.status === 'finished') {
     return {
@@ -33,7 +34,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // 🔧 Force-solve the board
-  state.current = state.solution.slice()
+  state.current = state.solution.slice() as CellValue[]
   state.given = state.given.map(() => true)
 
   const finish = tryFinishGame(state)
@@ -41,7 +42,7 @@ export default defineEventHandler(async (event) => {
   await prisma.game.update({
     where: { id },
     data: {
-      stateJson: state,
+      stateJson: (state as unknown as InputJsonValue),
       status: state.status,
     },
   })

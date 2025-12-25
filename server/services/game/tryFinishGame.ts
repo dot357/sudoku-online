@@ -26,6 +26,7 @@ export function tryFinishGame(state: GameState, now = new Date()): FinishResult 
   }
 
   const elapsedSec = computeElapsedSec(state, now)
+  //  TODO: Later add a clamp here to remove minus
   const bonus = 500 - elapsedSec
 
   state.score += bonus
