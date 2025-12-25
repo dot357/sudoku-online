@@ -1,5 +1,6 @@
 import type { GameState } from '~~/shared/types/sudoku'
-import { computeElapsedSec } from '~~/server/services/game/time'
+import { computeElapsedSec } from './time';
+import { calculateFinishBonus } from './score';
 
 type FinishResult =
   | { finished: false }
@@ -26,8 +27,7 @@ export function tryFinishGame(state: GameState, now = new Date()): FinishResult 
   }
 
   const elapsedSec = computeElapsedSec(state, now)
-  //  TODO: Later add a clamp here to remove minus
-  const bonus = 500 - elapsedSec
+  const bonus = calculateFinishBonus(elapsedSec)
 
   state.score += bonus
   state.status = 'finished'

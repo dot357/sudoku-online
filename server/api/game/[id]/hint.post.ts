@@ -4,11 +4,9 @@ import { getOrCreateSid } from '~~/server/utils/session'
 import type { CellValue,  GameState } from '~~/shared/types/sudoku'
 
 import { pickRandomEmptyCellIndex } from '~~/server/services/game/pickEmptyCell'
+import { canUseHint, calculateHintPenalty } from '~~/server/services/game/hint'
 import type { InputJsonValue } from '@prisma/client/runtime/client'
 import { toPublicDTO } from '~~/server/utils/publicDTOs'
-
-const MAX_HINTS = 10
-
 
 export default defineEventHandler(async (event) => {
   const sid = getOrCreateSid(event)
@@ -29,7 +27,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Game already finished' })
   }
 
-  if (state.hintsUsed >= MAX_HINTS) {
+  if (!canUseHint(state.hintsUsed)) {
     throw createError({ statusCode: 400, statusMessage: 'No hints remaining' })
   }
 
@@ -46,7 +44,7 @@ export default defineEventHandler(async (event) => {
 
   // Penalty: -3, -4, -5...
   // hintsUsed is 0-based before increment.
-  const penalty = -(3 + state.hintsUsed)
+  const penalty = calculateHintPenalty(state.hintsUsed)
   state.score += penalty
   state.hintsUsed += 1
 
