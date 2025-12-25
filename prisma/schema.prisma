@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Game {
+  id        String   @id @default(cuid())
+  sid       String
+  rank      String
+  status    String   @default("in_progress")
+  stateJson Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sid])
+}
+
+model Record {
+  id          String   @id @default(cuid())
+  rank        String
+  score       Int
+  durationSec Int
+  createdAt   DateTime @default(now())
+
+  @@index([score])
+}
