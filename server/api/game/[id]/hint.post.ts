@@ -21,6 +21,10 @@ export default defineEventHandler(async (event) => {
 
   const state = game.stateJson as unknown as GameState
 
+  if (state.pausedAt !== null) {
+    throw createError({ statusCode: 400, statusMessage: 'Game is paused' })
+  }
+
   if (state.status === 'finished') {
     throw createError({ statusCode: 400, statusMessage: 'Game already finished' })
   }

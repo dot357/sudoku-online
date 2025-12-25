@@ -44,3 +44,16 @@ export interface GamePublicStateDTO {
   digitCounts: number[] // 10 || 9
   errors: number
 }
+
+
+export interface GameSummaryDTO {
+  id: string
+  rank: Rank
+  status: GameStatus
+  score: number
+  elapsedSec: number
+  startedAt: string
+  hintsUsed: number
+  errors: number
+  paused: boolean
+}

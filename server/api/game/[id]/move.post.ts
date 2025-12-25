@@ -1,11 +1,9 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { prisma } from '~~/server/db/prisma'
 import { getOrCreateSid } from '~~/server/utils/session'
-import type { CellValue, GamePublicStateDTO, GameState } from '~~/shared/types/sudoku'
-import { calculateDigitCounts } from '~~/server/services/sudoku/digitCounts'
-import { computeElapsedSec } from '~~/server/services/game/time'
-import type { InputJsonValue } from '@prisma/client/runtime/wasm-compiler-edge'
+import type { CellValue, GameState } from '~~/shared/types/sudoku'
 import { toPublicDTO } from '~~/server/utils/publicDTOs'
+import { tryFinishGame } from '~~/server/services/game/tryFinishGame'
 
 type MoveBody = {
   index: number
@@ -19,18 +17,13 @@ function assertIndex(index: number) {
 }
 
 function assertValue(value: unknown): asserts value is CellValue {
-  if (value === null) {
-    return
-  }
+  if (value === null) return
 
-//   Type guard
-  if(typeof value !== 'number') {
-    return
-  }
-
-
-  if (!Number.isInteger(value) || value < 1 || value > 9) {
-    throw createError({ statusCode: 400, statusMessage: 'Invalid value (1..9 or null)' })
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 9) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Invalid value (1..9 or null)',
+    })
   }
 }
 
@@ -40,12 +33,12 @@ export default defineEventHandler(async (event) => {
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Missing game id' })
 
   const body = (await readBody(event)) as Partial<MoveBody>
-  const index = body.index
-  const value = body.value
+  const { index, value } = body
 
   if (index === undefined) {
     throw createError({ statusCode: 400, statusMessage: 'Missing index' })
   }
+
   assertIndex(index)
   assertValue(value)
 
@@ -55,55 +48,48 @@ export default defineEventHandler(async (event) => {
 
   const state = game.stateJson as unknown as GameState
 
+  if (state.pausedAt !== null) {
+    throw createError({ statusCode: 400, statusMessage: 'Game is paused' })
+  }
+
+
   if (state.status === 'finished') {
     throw createError({ statusCode: 400, statusMessage: 'Game already finished' })
   }
 
   if (state.given[index]) {
     throw createError({
-        statusCode : 400,
-        statusMessage : 'Cannot edit a given cell',
-        data : {
-            index,
-            given : true
-        }
+      statusCode: 400,
+      statusMessage: 'Cannot edit a given cell',
+      data: { index, given: true },
     })
   }
 
   const prev = state.current[index]
 
+  // Idempotent no-op
   if (value === prev) {
     return {
       ...toPublicDTO(id, state),
-      move : {
-        index,
-        value,
-        isCorrect : null,
-        deltaScore : 0
-      }
+      move: { index, value, isCorrect: null, deltaScore: 0 },
     }
   }
 
   state.current[index] = value
 
-
-  // Scoring logic (per spec)
+  // score calc
   let deltaScore = 0
   let isCorrect: boolean | null = null
 
-  if (value === null) {
-    // clearing a cell doesn't score
-    isCorrect = null
-  } else {
+  if (value !== null) {
     const correct = state.solution[index] === value
     isCorrect = correct
 
-    if (correct) {
-      // Only award +5 if they just filled it correctly from empty
-      if (prev === null) {
-        deltaScore += 5
-      }
-    } else {
+    if (correct && prev === null) {
+      deltaScore += 5
+    }
+
+    if (!correct) {
       deltaScore -= 1
       state.errors += 1
     }
@@ -111,39 +97,36 @@ export default defineEventHandler(async (event) => {
 
   state.score += deltaScore
 
-  // Save updated state
+  // check if finished?
+  const finish = tryFinishGame(state)
+
+ // persist state to db
   await prisma.game.update({
     where: { id },
     data: {
-      stateJson: (state as unknown as InputJsonValue),
-      status: state.status, // still in_progress for now
+      stateJson: state,
+      status: state.status,
     },
   })
 
-  const dto: GamePublicStateDTO = {
-    id,
-    rank: state.rank,
-    status: state.status,
-    score: state.score,
-    hintsUsed: state.hintsUsed,
-    errors: state.errors,
-    startedAt: state.startedAt,
-    elapsedSec: computeElapsedSec(state),
-    current: state.current,
-    given: state.given,
-    digitCounts: calculateDigitCounts(state.current),
+  if (finish.finished) {
+    await prisma.record
+      .create({
+        data: {
+          gameId: (id as unknown as string),
+          rank: state.rank,
+          score: state.score,
+          durationSec: finish.elapsedSec,
+        },
+      })
+      .catch(() => {})
   }
 
   return {
-    ...dto,
-    move: {
-      index,
-      value,
-      isCorrect,
-      deltaScore,
-    },
+    ...toPublicDTO(id, state),
+    move: { index, value, isCorrect, deltaScore },
+    finished: finish.finished
+      ? { bonus: finish.bonus, elapsedSec: finish.elapsedSec }
+      : null,
   }
 })
-
-
-
