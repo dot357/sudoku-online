@@ -1,18 +1,8 @@
 <script setup lang="ts">
-import type { CellValue, GamePublicStateDTO } from '~~/shared/types/sudoku'
-
+import type { CellValue, GamePublicStateDTO, HintResponseDTO, MoveResponseDTO } from '~/shared/types/sudoku'
+import { debugSolveGame, fetchGame, pauseGame, requestHint, resumeGame, sendMove as sendMoveRequest } from '~~/app/requests/game'
 
 const isDev = import.meta.env.DEV
-
-type MoveResponse = GamePublicStateDTO & {
-  move: { index: number; value: CellValue; isCorrect: boolean | null; deltaScore: number }
-  finished?: { bonus: number; elapsedSec: number } | null
-}
-
-type HintResponse = GamePublicStateDTO & {
-  hint: { index: number; value: number; penalty: number; hintsUsed: number }
-  finished?: { bonus: number; elapsedSec: number } | null
-}
 
 const route = useRoute()
 const { api } = useApi()
@@ -20,10 +10,11 @@ const { api } = useApi()
 const id = computed(() => String(route.params.id))
 const game = ref<GamePublicStateDTO | null>(null)
 const selectedIndex = ref<number | null>(null)
-const lastMove = ref<MoveResponse['move'] | null>(null)
-const lastHint = ref<HintResponse['hint'] | null>(null)
+const lastMove = ref<MoveResponseDTO['move'] | null>(null)
+const lastHint = ref<HintResponseDTO['hint'] | null>(null)
 const elapsedSec = ref(0)
 const timerId = ref<number | null>(null)
+const isPaused = computed(() => game.value?.paused === true)
 
 const errorMsg = ref<string | null>(null)
 const lastMoveInfo = ref<string | null>(null)
@@ -33,7 +24,7 @@ async function load() {
   lastMoveInfo.value = null
   lastMove.value = null
   lastHint.value = null
-  game.value = await api<GamePublicStateDTO>(`/api/game/${id.value}`)
+  game.value = await fetchGame(api, id.value)
 }
 
 function selectCell(i: number) {
@@ -60,10 +51,10 @@ function startTimer() {
   stopTimer()
   if (!game.value) return
   elapsedSec.value = game.value.elapsedSec
-  if (game.value.status !== 'in_progress') return
+  if (game.value.status !== 'in_progress' || game.value.paused) return
   let lastTick = Date.now()
   timerId.value = window.setInterval(() => {
-    if (!game.value || game.value.status !== 'in_progress') return
+    if (!game.value || game.value.status !== 'in_progress' || game.value.paused) return
     const now = Date.now()
     const delta = Math.floor((now - lastTick) / 1000)
     if (delta > 0) {
@@ -80,10 +71,7 @@ async function sendMove(index: number, value: CellValue) {
   lastHint.value = null
 
   try {
-    const res = await api<MoveResponse>(`/api/game/${id.value}/move`, {
-      method: 'POST',
-      body: { index, value },
-    })
+    const res = await sendMoveRequest(api, id.value, { index, value })
     game.value = res
     lastMove.value = res.move
     if (res.move.isCorrect === true) lastMoveInfo.value = `✅ +${res.move.deltaScore}`
@@ -98,7 +86,7 @@ async function hint() {
   lastMoveInfo.value = null
   lastMove.value = null
   try {
-    const res = await api<HintResponse>(`/api/game/${id.value}/hint`, { method: 'POST' })
+    const res = await requestHint(api, id.value)
     game.value = res
     lastHint.value = res.hint
     lastMoveInfo.value = `Hint at ${res.hint.index} (${res.hint.value}) ${res.hint.penalty}`
@@ -110,7 +98,7 @@ async function hint() {
 async function pause() {
   errorMsg.value = null
   try {
-    const res = await api<GamePublicStateDTO & { paused: boolean }>(`/api/game/${id.value}/pause`, { method: 'POST' })
+    const res = await pauseGame(api, id.value)
     game.value = res
   } catch (e: any) {
     errorMsg.value = e.message
@@ -120,7 +108,7 @@ async function pause() {
 async function resume() {
   errorMsg.value = null
   try {
-    const res = await api<GamePublicStateDTO & { paused: boolean }>(`/api/game/${id.value}/resume`, { method: 'POST' })
+    const res = await resumeGame(api, id.value)
     game.value = res
   } catch (e: any) {
     errorMsg.value = e.message
@@ -156,13 +144,7 @@ async function debugSolve() {
   lastMoveInfo.value = null
 
   try {
-    const res = await api<GamePublicStateDTO & {
-      finished?: { bonus: number; elapsedSec: number }
-      debug?: boolean
-    }>(`/api/game/${id.value}/solve`, {
-      method: 'POST',
-    })
-
+    const res = await debugSolveGame(api, id.value)
     game.value = res
     lastMoveInfo.value = '🧪 Solved via debug'
   } catch (e: any) {
@@ -181,7 +163,7 @@ onBeforeUnmount(() => {
 })
 
 watch(
-  () => [game.value?.id, game.value?.elapsedSec, game.value?.status],
+  () => [game.value?.id, game.value?.elapsedSec, game.value?.status, game.value?.paused],
   () => {
     startTimer()
   },
@@ -211,6 +193,7 @@ watch(
         :selected-index="selectedIndex"
         :last-move="lastMove"
         :last-hint="lastHint"
+        :is-dev="isDev"
         @select="selectCell"
       />
      </ClientOnly>
@@ -219,7 +202,12 @@ watch(
         <div><b>Score:</b> {{ game.score }}</div>
         <div><b>Errors:</b> {{ game.errors }}</div>
         <div><b>Hints:</b> {{ game.hintsUsed }} / 10</div>
-        <div><b>Elapsed:</b> {{ formatElapsed(elapsedSec) }}</div>
+        <div>
+          <b>Elapsed:</b>
+          <span :style="{ color: isPaused ? '#c00' : 'inherit' }">
+            {{ formatElapsed(elapsedSec) }}
+          </span>
+        </div>
 
         <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
             <button @click="hint" :disabled="game.status === 'finished'">Hint</button>

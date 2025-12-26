@@ -32,10 +32,10 @@ const backgroundClass = computed(() => {
 <template>
   <button
     type="button"
-    class="flex h-10 w-10 items-center justify-center border border-slate-300 text-lg leading-none transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:text-slate-400"
+    class="flex h-10 w-10 items-center justify-center crimson-text  border border-slate-300 text-2xl leading-none transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:text-slate-400"
     :class="[
       backgroundClass,
-      given ? 'font-semibold' : 'font-medium',
+      given ? 'font-semibold' : 'font-light',
     ]"
     :disabled="disabled"
     :aria-label="label"

@@ -7,9 +7,11 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: [
     '@nuxt/eslint',
-    '@nuxt/test-utils/module'
+    '@nuxt/test-utils/module',
   ],
+  
   css : [
+    'css-skeletons',
     '~/assets/css/main.css'
   ],
   vite : {

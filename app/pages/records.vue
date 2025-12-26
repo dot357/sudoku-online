@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import type { RecordDTO } from '~/shared/types/sudoku'
+import { fetchRecords } from '~~/app/requests/records'
+
 const { api } = useApi()
-const records = ref<any[]>([])
+const records = ref<RecordDTO[]>([])
 const errorMsg = ref<string | null>(null)
 
 onMounted(async () => {
   try {
-    const res = await api<{ records: any[] }>('/api/records')
+    const res = await fetchRecords(api)
     records.value = res.records
   } catch (e: any) {
     errorMsg.value = e.message

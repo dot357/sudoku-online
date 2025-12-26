@@ -74,3 +74,9 @@ sequenceDiagram
   end
   A-->>C: DTO + move result + optional finished bonus
 ```
+
+
+
+
+### Articles
+https://news.google.com/newspapers?nid=Ehil0879vHcC&dat=18950502&printsec=frontpage&hl=en

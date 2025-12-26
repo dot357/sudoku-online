@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import anime from 'animejs'
-import type { CellValue } from '~/shared/types/sudoku'
+import type { CellValue } from '~~/shared/types/sudoku'
 import { nextTick, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -9,6 +9,7 @@ const props = defineProps<{
   selectedIndex: number | null
   lastMove: { index: number; value: CellValue; isCorrect: boolean | null } | null
   lastHint: { index: number; value: number; penalty: number; hintsUsed: number } | null
+  isDev?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -144,12 +145,12 @@ function animateMove() {
   anime({
     targets: button,
     scale: [1, 0.94, 1],
-    backgroundColor: flashColor === baseColor
-      ? baseColor
-      : [
+    backgroundColor: props.isDev && flashColor !== baseColor
+      ? [
           { value: flashColor, duration: 140 },
           { value: baseColor, duration: 220 },
-        ],
+        ]
+      : baseColor,
     duration: 360,
     easing: 'easeOutQuad',
     complete: () => {
@@ -163,7 +164,7 @@ function animateMove() {
     return
   }
 
-  if (isCorrect === false && text) {
+  if (isCorrect === false && text && props.isDev) {
     text.style.color = '#e86767'
   }
 }
