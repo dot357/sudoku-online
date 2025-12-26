@@ -179,7 +179,7 @@ watch(
 </script>
 
 <template>
-  <main v-if="gameState" class="w-full mx-auto px-4 py-4">
+  <main v-if="gameState" class="w-full mx-auto px-4 py-4 bg-background">
     <header class="flex flex-col items-center justify-between">
       <div class="w-full text-center border-b border-stroke-light pb-2">
         <h1 class="text-2xl font-semibold opacity-70 ">

@@ -9,19 +9,19 @@ import LayoutHeader from '~/components/LayoutHeader.vue';
 
 <template>
  <div
-  class="relative bg-background min-h-dvh w-full overflow-hidden crimson-text"
+  class="relative bg-background min-h-dvh w-full lg:overflow-hidden crimson-text"
 >
   <!-- main content -->
   <span
-    class="absolute inset-0 bg-[url(/img/paper.png)] bg-repeat opacity-50 mix-blend-multiply pointer-events-none z-0"
+    class="fixed lg:absolute inset-0 bg-[url(/img/paper.png)] bg-repeat opacity-50 mix-blend-multiply pointer-events-none z-0"
   ></span>
 
   
-  <div class="grid grid-cols-[1fr_2fr_1fr] z-10">
+  <div class="lg:grid lg:grid-cols-[1fr_2fr_1fr] z-10">
 
     <!-- TODO: Arange images better -->
-     <!-- TODO: Make mobile friendly -->
-    <div class="border-stroke-light h-dvh border-r border-solid">
+
+    <div class="border-stroke-light h-dvh border-r border-solid hidden lg:block">
       <div
         class="aspect-4/4 relative flex items-end flex-col justify-end w-full border-stroke-light border-b"
       >
@@ -76,7 +76,7 @@ import LayoutHeader from '~/components/LayoutHeader.vue';
       </div>
     </div>
 
-    <div class="border-stroke-light h-dvh border-r border-solid">
+    <div class="border-stroke-light h-dvh border-r border-solid hidden lg:block">
       <div
         class="aspect-4/4 relative flex items-end flex-col justify-end w-full border-stroke-light border-b"
       >
