@@ -9,7 +9,7 @@ import LayoutHeader from '~/components/LayoutHeader.vue';
 
 <template>
  <div
-  class="relative bg-background min-h-dvh w-full lg:overflow-hidden crimson-text"
+  class="relative bg-background min-h-dvh w-full crimson-text"
 >
   <!-- main content -->
   <span
@@ -17,7 +17,10 @@ import LayoutHeader from '~/components/LayoutHeader.vue';
   ></span>
 
   
-  <div class="lg:grid lg:grid-cols-[1fr_2fr_1fr] z-10">
+  <div
+    class="relative z-10 w-full lg:overflow-hidden xl:mx-auto xl:max-w-[2000px] xl:min-h-dvh xl:border xl:border-stroke-light"
+  >
+    <div class="lg:grid lg:grid-cols-[1fr_2fr_1fr] xl:max-h-[1200px] overflow-hidden">
 
     <!-- TODO: Arange images better -->
 
@@ -47,10 +50,10 @@ import LayoutHeader from '~/components/LayoutHeader.vue';
           />
         </div>
          <div
-          class="ml-auto mix-blend-color-burn opacity-65 no-pointer-events w-[95%]"
+          class="ml-auto mix-blend-color-burn opacity-65 no-pointer-events w-[95%] border-t border-stroke-light"
         >
           <img
-            src="/img/news/4.png"
+            src="/img/news/7.png"
             alt="article 1"
             class="object-contain w-full h-full"
             draggable="false"
@@ -70,8 +73,10 @@ import LayoutHeader from '~/components/LayoutHeader.vue';
             <template #subtitle>Play online sudoku games</template>
          </layout-header>
          <!-- Main content -->
-         <div class="w-full ">
-           <slot /> 
+         <div class="w-full flex justify-center">
+           <div class="w-full max-w-[980px]">
+             <slot /> 
+           </div>
          </div>
       </div>
     </div>
@@ -104,7 +109,7 @@ import LayoutHeader from '~/components/LayoutHeader.vue';
           />
         </div>
         <div
-          class="mr-auto mix-blend-color-burn opacity-65 no-pointer-events w-[95%]"
+          class="mr-auto mix-blend-color-burn opacity-65 no-pointer-events w-[95%] border-t border-stroke-light"
         >
           <img
             src="/img/news/1.png"
@@ -114,6 +119,7 @@ import LayoutHeader from '~/components/LayoutHeader.vue';
           />
         </div>
       </div>
+    </div>
     </div>
   </div>
 </div>
