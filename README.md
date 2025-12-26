@@ -1,10 +1,9 @@
 ## Sudoku online
 
 
-<video width="640" height="480" controls>
-  <source src="./public/sudoku.mp4" type="video/mp4">
-</video>
+<img src="./public/sudoku.gif" alt="Sudoku demo" width="640" height="480">
 
+[](/public/sudoku.gif)
 Sudoku implementation with per-user sessions (HTTP-only cookie), server-side puzzle generation, persistent game state, scoring, hints, pause/resume, and leaderboard records.
 
 ### Stack
