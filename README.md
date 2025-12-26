@@ -8,6 +8,30 @@ Sudoku implementation with per-user sessions (HTTP-only cookie), server-side puz
 - Postman
 - Tailwind
 
+---
+
+## Docker
+
+Build and run with Docker:
+
+```bash
+docker build -t sudoku-nuxt .
+docker run --rm -p 3000:3000 sudoku-nuxt
+```
+
+Run with Docker Compose (bind-mounts `dev.db` for persistence):
+
+```bash
+docker compose up --build
+```
+
+or 
+
+
+```bash
+docker compose build --no-cache
+docker compose up
+```
 
 
 ## Why Nuxt (Nitro) for backend
