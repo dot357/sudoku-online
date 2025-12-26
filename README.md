@@ -3,46 +3,93 @@ Sudoku implementation with per-user sessions (HTTP-only cookie), server-side puz
 
 ### Stack
 - Nuxt 4 + Nitro
-- Prisma
-- Vitest + vitest-playwright
-- Postman
+- Prisma (SQLite)
+- Vitest
+- Postman (collection included)
 - Tailwind
+
+---
+
+## Node and package manager
+- **Node.js**: 20.x (see `/.nvmrc`)
+- **npm**: any recent 10.x works
+
+If you use `nvm`:
+```bash
+nvm use
+```
+
+---
+
+## Local setup
+
+Install dependencies:
+```bash
+npm install
+```
+
+Environment (SQLite by default):
+- `DATABASE_URL="file:./dev.db"` (see `/.env`)
+
+Vercel note (SQLite + serverless):
+- Use `DATABASE_URL="file:/tmp/dev.db"` in Vercel env vars to avoid read-only FS errors.
+- `/tmp` is ephemeral; data resets on cold starts.
+
+Start the dev server:
+```bash
+npm run dev
+```
+
+---
+
+## Scripts
+- `npm run dev` - start dev server
+- `npm run build` - production build
+- `npm run preview` - preview built app
+- `npm run test` - run unit tests
+- `npm run prisma:studio` - open Prisma Studio
 
 ---
 
 ## Docker
 
 Build and run with Docker:
-
 ```bash
 docker build -t sudoku-nuxt .
 docker run --rm -p 3000:3000 sudoku-nuxt
 ```
 
 Run with Docker Compose (bind-mounts `dev.db` for persistence):
-
 ```bash
 docker compose up --build
 ```
 
-or 
-
-
+Or:
 ```bash
 docker compose build --no-cache
 docker compose up
 ```
 
+---
 
-## Why Nuxt (Nitro) for backend
-- **Server-side puzzle generation**: the solution never needs to be exposed to the client.
-- **Per-user session via HTTP-only cookie**: each user (browser) owns their games.
-- **Simple deployment model**: API routes + UI in one codebase (but backend stays clean and testable).
+## Game rules (scoring and hints)
+- **Correct entry**: +5 when filling an empty cell with the correct value
+- **Wrong entry**: -1 and increments error count
+- **Hint**: reveals a correct value, marks it as given, and applies a penalty of `-(3 + hintsUsed)`
+- **Max hints**: 10 per game
+- **Finish bonus**: `max(0, 500 - elapsedSec)` applied when the board is solved
+- **Pause/Resume**: pauses elapsed time; time excludes paused duration
 
 ---
 
-## High-level architecture
+## API and architecture
 
+Quick reference:
+- API endpoints and error behavior: [`Docs/backend.md`](/Docs/backend.md)
+- Frontend page/data flow: [`Docs/frontend.md`](/Docs/frontend.md)
+- Database schema and state shape: [`Docs/database.md`](/Docs/database.md)
+
+High-level structure:
 - **API routes** live under `server/api/**`
 - **Domain services** live under `server/services/**` (pure, testable logic)
 - **Session** is determined by `sid` cookie (HTTP-only)
@@ -51,15 +98,6 @@ docker compose up
 
 ---
 
-## Diagrams
+## Postman
 
-More details and diagrams:
-- Backend: [`Docs/backend.md`](/Docs/backend.md) — request flow and server modules.
-- Frontend: [`Docs/frontend.md`](/Docs/frontend.md) — page-to-API flow and client fetch pattern.
-
-Both files include a short explanation before the diagrams to keep them easy to scan.
-
-
-
-### Articles
-https://news.google.com/newspapers?nid=Ehil0879vHcC&dat=18950502&printsec=frontpage&hl=en
+Import `postman-collection.json` to hit the local API.
