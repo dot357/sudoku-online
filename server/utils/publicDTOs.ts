@@ -6,6 +6,7 @@ export function toPublicDTO(id: string, state: GameState): GamePublicStateDTO {
     id,
     rank: state.rank,
     status: state.status,
+    paused: state.pausedAt !== null,
     score: state.score,
     hintsUsed: state.hintsUsed,
     errors: state.errors,

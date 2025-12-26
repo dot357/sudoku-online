@@ -1,1 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
 @import "tailwindcss";
+
+
+@theme base{
+    --color-background: #E5E5E5;
+    --color-stroke-light : #B2B2B2;
+}
+
+
+.custom-skeleton{
+ --bg: #9e9e9ea1;
+ --c-w: 100%
+  
+}
+
+@layer utilities {
+  .paper-border {
+    background-image: url("/svg/custom-border.svg");
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+  }
+
+  .paper-texture {
+    background-image: url("/textures/newspaper-paper.png");
+    background-repeat: repeat;
+  }
+
+  .custom-table thead tr > th{
+    @apply px-3 py-2 font-semibold;
+  }
+
+  .custom-table tbody tr > td{
+    @apply px-3 py-2;
+  }
+}
+
+.crimson-text {
+    font-family: 'Crimson Text', serif;
+}
+
+.cm-sans {
+    font-family: 'Cormorant Garamond', serif;
+}

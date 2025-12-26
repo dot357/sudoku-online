@@ -32,6 +32,7 @@ export default defineEventHandler(async (event) => {
     id: game.id,
     rank: state.rank,
     status: state.status,
+    paused: state.pausedAt !== null,
     score: state.score,
     hintsUsed: state.hintsUsed,
     errors: state.errors,
