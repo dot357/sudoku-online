@@ -25,6 +25,14 @@
     background-image: url("/textures/newspaper-paper.png");
     background-repeat: repeat;
   }
+
+  .custom-table thead tr > th{
+    @apply px-3 py-2 font-semibold;
+  }
+
+  .custom-table tbody tr > td{
+    @apply px-3 py-2;
+  }
 }
 
 .crimson-text {

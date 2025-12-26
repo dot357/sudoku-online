@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { fetchGames } from '~/requests/games'
-import { formatStartedAt, getActionLabel, getElapsed, getStatusLabel } from '~/utils/games'
+import { formatStartedAt, getActionLabel, getElapsed, getElapsedSeconds, getStatusLabel } from '~/utils/games'
 
 
 
@@ -11,6 +11,8 @@ const games = ref<GameSummaryDTO[]>([])
 const fetchedAt = ref(0)
 const now = ref(Date.now())
 let ticker: ReturnType<typeof setInterval> | null = null
+const sortKey = ref<'rank' | 'score' | 'elapsed' | 'started'>('started')
+const sortDir = ref<'asc' | 'desc'>('desc')
 
 const { api } = useApi()
 
@@ -48,6 +50,51 @@ async function initialize() {
     }
 }
 
+const rankOrder: Record<string, number> = {
+    expert: 4,
+    hard: 3,
+    intermediate: 2,
+    beginner: 1
+}
+
+function setSort(key: 'rank' | 'score' | 'elapsed' | 'started') {
+    if (sortKey.value === key) {
+        sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+        return
+    }
+    sortKey.value = key
+    sortDir.value = 'desc'
+}
+
+function sortIndicator(key: 'rank' | 'score' | 'elapsed' | 'started') {
+    if (sortKey.value !== key) return ''
+    return sortDir.value === 'asc' ? '↑' : '↓'
+}
+
+const sortedGames = computed(() => {
+    const dir = sortDir.value === 'asc' ? 1 : -1
+    const nowMs = now.value
+    const fetchedAtMs = fetchedAt.value
+    return [...games.value].sort((a, b) => {
+        if (sortKey.value === 'rank') {
+            const rankA = rankOrder[a.rank] ?? 0
+            const rankB = rankOrder[b.rank] ?? 0
+            return (rankA - rankB) * dir
+        }
+        if (sortKey.value === 'score') {
+            return (a.score - b.score) * dir
+        }
+        if (sortKey.value === 'elapsed') {
+            const elapsedA = getElapsedSeconds(a, nowMs, fetchedAtMs)
+            const elapsedB = getElapsedSeconds(b, nowMs, fetchedAtMs)
+            return (elapsedA - elapsedB) * dir
+        }
+        const startedAtA = new Date(a.startedAt).getTime()
+        const startedAtB = new Date(b.startedAt).getTime()
+        return (startedAtA - startedAtB) * dir
+    })
+})
+
 </script>
 
 
@@ -67,20 +114,42 @@ async function initialize() {
             <div v-if="errorMessage" class="mb-4 text-red-600">
                 {{ errorMessage }}
             </div>
-            <div v-else class="w-full overflow-x-auto h-[400px]">
-                <table class="w-full border border-black/10 bg-white/70">
-                    <thead class="bg-background/20  text-left ">
+            <div v-else class="w-full overflow-x-auto h-[70dvh]">
+                <!-- Lets make this table as a component -->
+
+                <TableComponent>
+                    <template #tableHeader>
                         <tr>
-                            <th class="py-2 px-3 font-semibold">Rank</th>
+                            <th class="py-2 px-3 font-semibold">
+                                <button type="button" class="inline-flex items-center gap-2" @click="setSort('rank')">
+                                    Rank
+                                    <span class="text-xs">{{ sortIndicator('rank') }}</span>
+                                </button>
+                            </th>
                             <th class="py-2 px-3 font-semibold">Status</th>
-                            <th class="py-2 px-3 font-semibold">Score</th>
-                            <th class="py-2 px-3 font-semibold">Elapsed</th>
-                            <th class="py-2 px-3 font-semibold">Started</th>
+                            <th class="py-2 px-3 font-semibold">
+                                <button type="button" class="inline-flex items-center gap-2" @click="setSort('score')">
+                                    Score
+                                    <span class="text-xs">{{ sortIndicator('score') }}</span>
+                                </button>
+                            </th>
+                            <th class="py-2 px-3 font-semibold">
+                                <button type="button" class="inline-flex items-center gap-2" @click="setSort('elapsed')">
+                                    Elapsed
+                                    <span class="text-xs">{{ sortIndicator('elapsed') }}</span>
+                                </button>
+                            </th>
+                            <th class="py-2 px-3 font-semibold">
+                                <button type="button" class="inline-flex items-center gap-2" @click="setSort('started')">
+                                    Started
+                                    <span class="text-xs">{{ sortIndicator('started') }}</span>
+                                </button>
+                            </th>
                             <th class="py-2 px-3 font-semibold text-right">Action</th>
                         </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="game in games" :key="game.id" class="border-t border-black/10">
+                    </template>
+                    <template #tableBody>
+                         <tr v-for="game in sortedGames" :key="game.id" class="border-t border-black/10">
                             <td class="py-2 px-3 capitalize">{{ game.rank }}</td>
                             <td class="py-2 px-3 w-[100px]">{{ getStatusLabel(game.status) }}</td>
                             <td class="py-2 px-3">{{ game.score }}</td>
@@ -97,8 +166,9 @@ async function initialize() {
                                 </NuxtLink>
                             </td>
                         </tr>
-                    </tbody>
-                </table>
+                    </template>
+                    
+                </TableComponent>
             </div>
         </div>
     </div>

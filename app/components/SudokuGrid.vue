@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import anime from 'animejs'
-import type { CellValue } from '~/shared/types/sudoku'
+import type { CellValue } from '~~/shared/types/sudoku'
 import { nextTick, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -9,14 +9,21 @@ const props = defineProps<{
   selectedIndex: number | null
   lastMove: { index: number; value: CellValue; isCorrect: boolean | null } | null
   lastHint: { index: number; value: number; penalty: number; hintsUsed: number } | null
+  isDev?: boolean
 }>()
-
-const gridRef = ref<HTMLDivElement | null>(null)
-const hiddenIndices = ref(new Set<number>())
 
 const emit = defineEmits<{
   (e: 'select', index: number): void
 }>()
+
+const gridRef = ref<HTMLDivElement | null>(null)
+const hiddenIndices = ref(new Set<number>())
+const moveStamp = ref(new Map<number, number>())
+
+function selectedValue() {
+  if (props.selectedIndex === null) return null
+  return props.current[props.selectedIndex]
+}
 
 function isRelated(i: number) {
   if (props.selectedIndex === null) return false
@@ -29,11 +36,6 @@ function isRelated(i: number) {
   const sameBox = Math.floor(row / 3) === Math.floor(selectedRow / 3)
     && Math.floor(col / 3) === Math.floor(selectedCol / 3)
   return sameRow || sameCol || sameBox
-}
-
-function selectedValue() {
-  if (props.selectedIndex === null) return null
-  return props.current[props.selectedIndex]
 }
 
 function isSameValue(i: number) {
@@ -58,6 +60,37 @@ function highlightColor(i: number) {
   if (type === 'related') return '#e9f2ff'
   if (props.given[i]) return '#f6f6f6'
   return 'white'
+}
+
+function setHidden(index: number, hidden: boolean) {
+  const next = new Set(hiddenIndices.value)
+  if (hidden) next.add(index)
+  else next.delete(index)
+  hiddenIndices.value = next
+}
+
+function bumpStamp(index: number) {
+  const next = new Map(moveStamp.value)
+  const current = (next.get(index) ?? 0) + 1
+  next.set(index, current)
+  moveStamp.value = next
+  return current
+}
+
+function displayValue(index: number, value: CellValue) {
+  if (hiddenIndices.value.has(index)) return ''
+  return value ?? ''
+}
+
+function cellBorderStyle(i: number) {
+  const row = Math.floor(i / 9)
+  const col = i % 9
+  return {
+    borderLeftWidth: col === 0 || col === 3 || col === 6 ? '2px' : '1px',
+    borderTopWidth: row === 0 || row === 3 || row === 6 ? '2px' : '1px',
+    borderRightWidth: col === 8 ? '2px' : '1px',
+    borderBottomWidth: row === 8 ? '2px' : '1px',
+  }
 }
 
 function applyHighlight() {
@@ -88,18 +121,6 @@ function applyHighlight() {
   })
 }
 
-function displayValue(index: number, value: CellValue) {
-  if (hiddenIndices.value.has(index)) return ''
-  return value ?? ''
-}
-
-function setHidden(index: number, hidden: boolean) {
-  const next = new Set(hiddenIndices.value)
-  if (hidden) next.add(index)
-  else next.delete(index)
-  hiddenIndices.value = next
-}
-
 function animateMove() {
   if (!gridRef.value || !props.lastMove) return
   const { index, isCorrect, value } = props.lastMove
@@ -108,9 +129,14 @@ function animateMove() {
   )
   if (!button) return
 
+  const stamp = bumpStamp(index)
   const text = button.querySelector<HTMLSpanElement>('span[data-value="true"]')
-  if (text) text.style.opacity = '1'
-  if (value === null) setHidden(index, false)
+  if (text) {
+    anime.remove(text)
+    text.style.opacity = '1'
+    text.style.color = ''
+  }
+  setHidden(index, false)
 
   const baseColor = highlightColor(index)
   const flashColor = isCorrect === true ? '#8ed081' : isCorrect === false ? '#e86767' : baseColor
@@ -119,12 +145,12 @@ function animateMove() {
   anime({
     targets: button,
     scale: [1, 0.94, 1],
-    backgroundColor: flashColor === baseColor
-      ? baseColor
-      : [
+    backgroundColor: props.isDev && flashColor !== baseColor
+      ? [
           { value: flashColor, duration: 140 },
           { value: baseColor, duration: 220 },
-        ],
+        ]
+      : baseColor,
     duration: 360,
     easing: 'easeOutQuad',
     complete: () => {
@@ -138,19 +164,8 @@ function animateMove() {
     return
   }
 
-  if (isCorrect === false && text) {
-    anime.remove(text)
-    anime({
-      targets: text,
-      opacity: [1, 0],
-      delay: 120,
-      duration: 650,
-      easing: 'easeOutQuad',
-      complete: () => {
-        setHidden(index, true)
-        text.style.opacity = '1'
-      },
-    })
+  if (isCorrect === false && text && props.isDev) {
+    text.style.color = '#e86767'
   }
 }
 
@@ -215,36 +230,26 @@ watch(
 <template>
   <div
     ref="gridRef"
-    style="
-      display:grid;
-      grid-template-columns: repeat(9, 40px);
-      grid-template-rows: repeat(9, 40px);
-      gap:0;
-      user-select:none;
-    "
+    class="grid select-none"
+    style="grid-template-columns: repeat(9, 40px); grid-template-rows: repeat(9, 40px); gap: 0;"
+    role="grid"
   >
-    <button
+    <Cell
       v-for="(v, i) in current"
       :key="i"
-      @click="emit('select', i)"
+      :value="displayValue(i, v)"
+      :given="given[i]"
+      :selected="selectedIndex === i"
+      :related="highlightType(i) === 'related'"
+      :same-value="highlightType(i) === 'same'"
+      :row="Math.floor(i / 9)"
+      :col="i % 9"
       :data-index="i"
       :data-highlight="highlightType(i) !== 'none' ? 'true' : 'false'"
       :data-selected="selectedIndex === i ? 'true' : 'false'"
       :data-highlight-type="highlightType(i)"
-      :style="{
-        width: '40px',
-        height: '40px',
-        border: '1px solid #999',
-        fontWeight: given[i] ? '700' : '500',
-        cursor: 'pointer',
-        // thicker borders for 3x3 boxes
-        borderLeftWidth: (i % 9 === 0 || i % 9 === 3 || i % 9 === 6) ? '2px' : '1px',
-        borderTopWidth: (Math.floor(i/9) === 0 || Math.floor(i/9) === 3 || Math.floor(i/9) === 6) ? '2px' : '1px',
-        borderRightWidth: (i % 9 === 8) ? '2px' : '1px',
-        borderBottomWidth: (Math.floor(i/9) === 8) ? '2px' : '1px',
-      }"
-    >
-      <span data-value="true">{{ displayValue(i, v) }}</span>
-    </button>
+      :style="cellBorderStyle(i)"
+      @click="emit('select', i)"
+    />
   </div>
 </template>

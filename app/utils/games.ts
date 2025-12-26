@@ -9,13 +9,17 @@ export function formatElapsedSeconds(totalSeconds: number) {
     return `${hh}${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 }
 
-export function getElapsed(game: GameSummaryDTO, nowMs: number, fetchedAtMs: number) {
+export function getElapsedSeconds(game: GameSummaryDTO, nowMs: number, fetchedAtMs: number) {
     let elapsed = game.elapsedSec
     const shouldTick = game.status === 'in_progress' && !game.paused
     if (shouldTick && fetchedAtMs) {
         elapsed += Math.floor((nowMs - fetchedAtMs) / 1000)
     }
-    return formatElapsedSeconds(elapsed)
+    return elapsed
+}
+
+export function getElapsed(game: GameSummaryDTO, nowMs: number, fetchedAtMs: number) {
+    return formatElapsedSeconds(getElapsedSeconds(game, nowMs, fetchedAtMs))
 }
 
 export function getActionLabel(game: GameSummaryDTO) {
