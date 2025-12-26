@@ -1,5 +1,17 @@
 # Frontend Overview
 
+## Structure
+
+- `app/pages/**` - Nuxt pages (`/`, `/games`, `/records`, `/game/:id`)
+- `app/components/**` - grid, cells, layout header
+- `app/composables/useApi.ts` - centralized `$fetch` wrapper with `credentials: include`
+- `app/requests/**` - request helpers and DTO typing
+
+## Data flow summary
+
+Pages call `useApi` and request helpers to hit server routes. The server returns
+public DTOs (no solution) which are rendered by grid components.
+
 ## Pages and API Calls
 
 ```mermaid
