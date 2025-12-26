@@ -1,4 +1,6 @@
 ## Sudoku online
+![](/public/sudoku.mp4)
+
 Sudoku implementation with per-user sessions (HTTP-only cookie), server-side puzzle generation, persistent game state, scoring, hints, pause/resume, and leaderboard records.
 
 ### Stack
