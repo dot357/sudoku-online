@@ -30,8 +30,8 @@ Sudoku implementation with per-user sessions (HTTP-only cookie), server-side puz
 ## Diagrams
 
 More details and diagrams:
-- Backend: `Docs/backend.md` — request flow and server modules.
-- Frontend: `Docs/frontend.md` — page-to-API flow and client fetch pattern.
+- Backend: [`Docs/backend.md`](/Docs/backend.md) — request flow and server modules.
+- Frontend: [`Docs/frontend.md`](/Docs/frontend.md) — page-to-API flow and client fetch pattern.
 
 Both files include a short explanation before the diagrams to keep them easy to scan.
 
