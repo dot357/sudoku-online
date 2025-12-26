@@ -31,6 +31,10 @@ npm install
 Environment (SQLite by default):
 - `DATABASE_URL="file:./dev.db"` (see `/.env`)
 
+Vercel note (SQLite + serverless):
+- Use `DATABASE_URL="file:/tmp/dev.db"` in Vercel env vars to avoid read-only FS errors.
+- `/tmp` is ephemeral; data resets on cold starts.
+
 Start the dev server:
 ```bash
 npm run dev
