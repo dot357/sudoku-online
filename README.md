@@ -7,6 +7,8 @@
 
 Sudoku implementation with per-user sessions (HTTP-only cookie), server-side puzzle generation, persistent game state, scoring, hints, pause/resume, and leaderboard records.
 
+Note: The spec did not require a backend. I chose a server-side architecture to ensure puzzle integrity, persistent records, and clear separation of domain logic for testing.
+
 ### Stack
 - Nuxt 4 + Nitro
 - Prisma (SQLite)
